@@ -1,12 +1,21 @@
 import './style.css'
-import { createBoard, printBoardState } from './pieces';
+import { createBoard, printBoardOffsets } from './chess';
 
 const board = createBoard();
-console.log(printBoardState(board));
 
-// const app = document.querySelector<HTMLDivElement>('#app')!
+const renderBoard = () => {
+  const boardOffsets = printBoardOffsets(board);
+  const rows = boardOffsets.split('\n');
+  let result = '<div>';
+  rows.forEach(row => {
+    result += '<div style="display: flex;">';
+    row.split('\t').forEach(s => { result += `<div class="square"><p>${s}</p></div>` });
+    result += '</div>';
+  });
+  result += '</div>';
+  return result;
+};
 
-// app.innerHTML = `
-//   <h1>Hello Vite!</h1>
-//   <a href="https://vitejs.dev/guide/features.html" target="_blank">Documentation</a>
-// `
+const app = document.querySelector<HTMLDivElement>('#app')!
+
+app.innerHTML = renderBoard();

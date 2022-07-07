@@ -59,10 +59,16 @@ export function createBoard() {
 }
 
 
-export function printBoardState(board: Board) {
+export function printBoardOffsets(board: Board) {
   let result = '';
   for (let index = 0; index < 12; index++) {
-    result += `${board.squares.map(x => x.offset).slice(index * 12, (index * 12) + 12).join('\t')}\n\n`
+    result += `${board.squares.map(x => x.offset).slice(index * 12, (index * 12) + 12).join('\t')}`
+    if (index !== 11) {
+      result += '\n';
+    }
   }
   return result;
 }
+
+
+// todo: 
