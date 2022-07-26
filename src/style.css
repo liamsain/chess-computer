@@ -16,10 +16,28 @@
    display: flex;
   justify-content:center;
   align-items:center;
-  padding: 4px;
+  padding: 8px;
   font-size:small
 }
 .square:hover {
   background: rgb(225, 225, 225);
   cursor: pointer;
+}
+.square--black {
+  background: green;
+}
+.square--white {
+  background: white;
+}
+
+.grabbable {
+    cursor: move; /* fallback if grab cursor is unsupported */
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+}
+.grabbable:active {
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
 }

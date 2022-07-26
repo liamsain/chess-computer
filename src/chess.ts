@@ -1,3 +1,24 @@
+import blackBishop from '../assets/bB.png';
+import blackKing from '../assets/bK.png';
+import blackKnight from '../assets/bN.png';
+import blackPawn from '../assets/bP.png';
+import blackQueen from '../assets/bQ.png';
+import blackRook from '../assets/bR.png';
+import whiteBishop from '../assets/wB.png';
+import whiteKing from '../assets/wK.png';
+import whiteKnight from '../assets/wN.png';
+import whitePawn from '../assets/wP.png';
+import whiteQueen from '../assets/wQ.png';
+import whiteRook from '../assets/wR.png';
+
+export const InitialPieceData = {
+  WhiteKing: {
+    img: whiteKing,
+  }
+};
+
+
+
 export enum SquareOccupier {
   Empty = 0,
   WhitePawn = 1,
@@ -70,5 +91,162 @@ export function printBoardOffsets(board: Board) {
   return result;
 }
 
+const createGame = (board: Board) => {
 
-// todo: 
+};
+
+export function getCoordFromOffset(offset: number): string {
+  if (offset < 11 || offset > 88) {
+    return '';
+  }
+  const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+  const ranks = ['1', '2', '3', '4', '5', '6', '7', '8'];
+  let file = files[Math.floor(offset / 10) - 1];
+  let rank = ranks[offset % 10 - 1];
+  if (!rank) {
+    return '';
+  }
+  return `${file}${rank}`;
+}
+
+
+export function getOffsetFromCoord(coord: string): number {
+  const sanitisedCoord = coord.trim().toLowerCase();
+  if (sanitisedCoord.length !== 2) {
+    return 0;
+  }
+  const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+  const fileIndex = files.findIndex(x => x === sanitisedCoord[0]);
+  if (fileIndex === -1) {
+    return 0;
+  }
+  const fileOffset = fileIndex + 1;
+  const rankNumber = Number(sanitisedCoord[1]);
+  if (rankNumber < 1 || rankNumber > 8) {
+    return 0;
+  }
+  return Number(`${fileOffset}${rankNumber}`);
+
+
+}
+
+export function getKingMoves(currentOffset: number, board: Board) {
+  if (currentOffset === 0) {
+    return [];
+  }
+  const pseudoLegalMoveDirections = [-9, 1, 11, -10, 10, -11, -1, 9]
+  const pseudoLegalMoves = pseudoLegalMoveDirections
+    .map(x => currentOffset + x)
+    .filter(x => {
+      const offsetIsValid = x > 10 && x < 89 && (x - 9) % 10 !== 0 && x % 10 !== 0;
+      const square = board.squares.find(sq => sq.offset === x);
+      return offsetIsValid && square?.occupier === SquareOccupier.Empty;
+    })
+    .map(x => getCoordFromOffset(x));
+
+  return pseudoLegalMoves;
+}
+
+export function getBishopMoves(currentOffset: number, board: Board) {
+  const offsets: number[] = [];
+  const topLeftInc = -13;
+  const topRightInc = -11;
+  const bottomLeftInc = 11
+  const bottomRightInc = 13;
+  const index = board.squares.findIndex(sq => sq.offset === currentOffset);
+  if (index === -1) {
+    return offsets;
+  }
+  const getOffsets = (inc: number) => {
+    const result: number[] = [];
+    let currentIndex = index;
+    while (true) {
+      currentIndex += inc;
+      const squareOffset = board.squares[currentIndex].offset;
+      if (squareOffset == 0) {
+        break;
+      }
+      result.push(squareOffset);
+    }
+    return result;
+  }
+  return [...getOffsets(topLeftInc), ...getOffsets(topRightInc), ...getOffsets(bottomLeftInc), ...getOffsets(bottomRightInc)]
+}
+
+export function getKnightMoves(currentOffset: number) {
+  const min = 11;
+  const max = 88;
+
+  const offsets = [
+    currentOffset - 21,
+    currentOffset - 19,
+    currentOffset - 8,
+    currentOffset + 12,
+    currentOffset + 21,
+    currentOffset + 19,
+    currentOffset + 8,
+    currentOffset - 12
+  ];
+
+  return offsets.filter(x => x >= min && x <= max && x % 10 !== 0 && x % 10 !== 9);
+}
+
+export function getQueenMoves(currentOffset: number) {
+  return [...getRookMoves(currentOffset), ...getBishopMoves(currentOffset)]
+}
+
+export function getRookMoves(currentOffset: number) {
+  const offsets = [];
+  const min = 11;
+  const max = 88;
+  const minBottom = (10 * Math.floor(currentOffset / 10)) + 1;
+  const maxTop = minBottom + 7;
+  console.log(maxTop);
+  let current = currentOffset;
+
+  // left
+  while (current >= min) {
+    current -= 10;
+    if (current >= min) {
+      offsets.push(current);
+    }
+  }
+  // top
+  current = currentOffset;
+  while (current <= maxTop) {
+    current += 1;
+    if (current <= maxTop) {
+      if (current <= maxTop) {
+        offsets.push(current);
+      }
+    }
+  }
+  // right
+  current = currentOffset;
+  while (current <= max) {
+    current += 10;
+    if (current <= max) {
+      offsets.push(current);
+    }
+  }
+  // down
+  current = currentOffset;
+  while (current >= minBottom) {
+    current -= 1;
+    if (current >= minBottom) {
+      offsets.push(current);
+    }
+  }
+  return offsets;
+
+}
+
+export function placePieceOnSquare(occupier: SquareOccupier, coord: string, board: Board) {
+  const offset = getOffsetFromCoord(coord);
+  if (offset !== 0) {
+    const sq = board.squares.find(x => x.offset === offset);
+    if (sq) {
+      sq.occupier = occupier;
+    }
+  }
+}
