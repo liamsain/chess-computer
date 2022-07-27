@@ -131,20 +131,23 @@ export function getOffsetFromCoord(coord: string): number {
 }
 
 export function getKingMoves(currentOffset: number, board: Board) {
+  const offsets: number[] = [];
   if (currentOffset === 0) {
     return [];
   }
-  const pseudoLegalMoveDirections = [-9, 1, 11, -10, 10, -11, -1, 9]
-  const pseudoLegalMoves = pseudoLegalMoveDirections
-    .map(x => currentOffset + x)
-    .filter(x => {
-      const offsetIsValid = x > 10 && x < 89 && (x - 9) % 10 !== 0 && x % 10 !== 0;
-      const square = board.squares.find(sq => sq.offset === x);
-      return offsetIsValid && square?.occupier === SquareOccupier.Empty;
-    })
-    .map(x => getCoordFromOffset(x));
+  const pseudoLegalMoveDirectionIndexes = [-13, -12, -11, -1, 1, 11, 12, 13];
+  const index = board.squares.findIndex(sq => sq.offset === currentOffset);
+  if (index === -1) {
+    return offsets;
+  }
+  pseudoLegalMoveDirectionIndexes.forEach(i => {
+    const square = board.squares[index + i];
+    if (square.occupier === SquareOccupier.Empty && square.offset !== 0) {
+      offsets.push(square.offset);
+    }
+  });
 
-  return pseudoLegalMoves;
+  return offsets;
 }
 
 export function getBishopMoves(currentOffset: number, board: Board) {
@@ -173,7 +176,7 @@ export function getBishopMoves(currentOffset: number, board: Board) {
   return [...getOffsets(topLeftInc), ...getOffsets(topRightInc), ...getOffsets(bottomLeftInc), ...getOffsets(bottomRightInc)]
 }
 
-export function getKnightMoves(currentOffset: number) {
+export function getKnightMoves(currentOffset: number, board: Board) {
   const min = 11;
   const max = 88;
 
