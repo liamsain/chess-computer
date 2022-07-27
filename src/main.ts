@@ -31,7 +31,7 @@ document.querySelectorAll('.square')
   .forEach(x => {
     x.addEventListener('click', (ev) => {
        const offset = (ev.target.getAttribute('offset') )
-      console.log('offset: ', offset, getKingMoves(Number(offset ), board));
+      console.log('offset: ', offset, getQueenMoves(Number(offset ), board));
       }
     )
 });

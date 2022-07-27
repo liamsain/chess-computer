@@ -11,12 +11,6 @@ import whitePawn from '../assets/wP.png';
 import whiteQueen from '../assets/wQ.png';
 import whiteRook from '../assets/wR.png';
 
-export const InitialPieceData = {
-  WhiteKing: {
-    img: whiteKing,
-  }
-};
-
 
 
 export enum SquareOccupier {
@@ -51,6 +45,7 @@ export interface Board {
 export interface Game {
   board: Board;
   lastMoveWasDoublePawnMove: boolean;
+  activeColour: 'White' | 'Black'
 }
 
 export interface Piece {
@@ -58,6 +53,7 @@ export interface Piece {
   name: string;
   offset: number;
   captured: boolean;
+  img: string;
 }
 
 export function createBoard() {
@@ -77,6 +73,29 @@ export function createBoard() {
 
   }
   return board;
+}
+
+export function createGameFromFen(fen: string) {
+  // starting pos fen: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+  // 1. piece placement data
+  // 2. active colour
+  // 3. castling option. '-' if neither side can castle, 'KQkq' if both sides can castle both sides
+  // 4. en passant target square. '-' if none exists
+  // 5. half move clock: the number of half moves since the last capture or pawn advance
+  // 6. fullmove number: the number of full moves
+  const game: Game = {
+    board: createBoard(),
+    lastMoveWasDoublePawnMove: false,
+    activeColour: 'White'
+  }
+  const fenSplit = fen.split(' ');
+  const piecePlacement = fenSplit[0];
+  const activeColour = fenSplit[1];
+  const castlingOption = fenSplit[2];
+  const enPassantTarget = fenSplit[3];
+  const halfMoveClock = fenSplit[4];
+  const fullmoveNumber = fenSplit[5];
+  return game;
 }
 
 
@@ -177,71 +196,52 @@ export function getBishopMoves(currentOffset: number, board: Board) {
 }
 
 export function getKnightMoves(currentOffset: number, board: Board) {
-  const min = 11;
-  const max = 88;
 
-  const offsets = [
-    currentOffset - 21,
-    currentOffset - 19,
-    currentOffset - 8,
-    currentOffset + 12,
-    currentOffset + 21,
-    currentOffset + 19,
-    currentOffset + 8,
-    currentOffset - 12
+  const offsets: number[] = [];
+  const index = board.squares.findIndex(sq => sq.offset === currentOffset);
+  if (index === -1) {
+    return offsets;
+  }
+  // from bottom left
+  const indexMoves = [
+    23, 10, -14, -25, -23, -10, 14, 25
   ];
-
-  return offsets.filter(x => x >= min && x <= max && x % 10 !== 0 && x % 10 !== 9);
-}
-
-export function getQueenMoves(currentOffset: number) {
-  return [...getRookMoves(currentOffset), ...getBishopMoves(currentOffset)]
-}
-
-export function getRookMoves(currentOffset: number) {
-  const offsets = [];
-  const min = 11;
-  const max = 88;
-  const minBottom = (10 * Math.floor(currentOffset / 10)) + 1;
-  const maxTop = minBottom + 7;
-  console.log(maxTop);
-  let current = currentOffset;
-
-  // left
-  while (current >= min) {
-    current -= 10;
-    if (current >= min) {
-      offsets.push(current);
+  indexMoves.forEach(i => {
+    const sq = board.squares[index + i];
+    if (sq.offset !== 0 && sq.occupier === SquareOccupier.Empty) {
+      offsets.push(sq.offset);
     }
-  }
-  // top
-  current = currentOffset;
-  while (current <= maxTop) {
-    current += 1;
-    if (current <= maxTop) {
-      if (current <= maxTop) {
-        offsets.push(current);
-      }
-    }
-  }
-  // right
-  current = currentOffset;
-  while (current <= max) {
-    current += 10;
-    if (current <= max) {
-      offsets.push(current);
-    }
-  }
-  // down
-  current = currentOffset;
-  while (current >= minBottom) {
-    current -= 1;
-    if (current >= minBottom) {
-      offsets.push(current);
-    }
-  }
+  });
   return offsets;
+}
 
+export function getQueenMoves(currentOffset: number, board: Board) {
+  return [...getRookMoves(currentOffset, board), ...getBishopMoves(currentOffset, board)]
+}
+
+export function getRookMoves(currentOffset: number, board: Board) {
+  // todo: 
+  // if square has a piece on it and is same colour stop going in that direction
+  // if square has enemy piece on it, it's a capture
+  const index = board.squares.findIndex(sq => sq.offset === currentOffset);
+  if (index === -1) {
+    return [];
+  }
+  const getOffsets = (inc: number) => {
+    const result: number[] = [];
+    let currentIndex = index;
+    while (true) {
+      currentIndex += inc;
+      const squareOffset = board.squares[currentIndex].offset;
+      if (squareOffset == 0) {
+        break;
+      }
+      result.push(squareOffset);
+    }
+    return result;
+  };
+
+  return [...getOffsets(-12), ...getOffsets(1), ...getOffsets(12), ...getOffsets(-1)];
 }
 
 export function placePieceOnSquare(occupier: SquareOccupier, coord: string, board: Board) {
